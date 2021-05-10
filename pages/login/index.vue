@@ -1,5 +1,5 @@
 <template>
-  <v-row>
+  <v-row v-if="componentRendering">
     <v-col col="12" sm="6" md="6">
       <v-card outlined>
         <v-card-text>
@@ -23,11 +23,25 @@
               @blur="$v.password.$touch()"
             ></v-text-field>
 
-            <v-btn class="mr-4" @click="submit"> Login </v-btn>
+            <v-btn class="mr-4" @click="submit">
+              <v-progress-circular
+                indeterminate
+                color="primary"
+                :size="20"
+                class="mr-1"
+                v-if="loading"
+              ></v-progress-circular>
+              Login
+            </v-btn>
             <v-btn @click="clear"> clear </v-btn>
           </form>
         </v-card-text>
       </v-card>
+    </v-col>
+  </v-row>
+  <v-row justify="center" no-gutters v-else>
+    <v-col class="progress-status" md="auto">
+      <ProgressCircular />
     </v-col>
   </v-row>
 </template>
@@ -45,9 +59,17 @@ export default {
     email: { required, email },
   },
 
+  mounted() {
+    setTimeout(() => {
+      this.componentRendering = true;
+    }, 2000);
+  },
+
   data: () => ({
     password: "cityslicka",
     email: "eve.holt@reqres.in",
+    loading: false,
+    componentRendering: false,
   }),
 
   computed: {
@@ -70,10 +92,23 @@ export default {
     submit() {
       this.$v.$touch();
       if (!this.$v.$invalid) {
-        this.$store.dispatch("auth/login", {
-          email: this.email,
-          password: this.password,
-        });
+        this.loading = true;
+        setTimeout(() => {
+          this.$store
+            .dispatch("auth/login", {
+              email: this.email,
+              password: this.password,
+            })
+            .then((response) => {
+              console.log(response);
+              this.loading = false;
+              this.$nuxt.$options.router.push("perusahaan");
+            })
+            .catch((error) => {
+              console.log(error);
+              this.loading = false;
+            });
+        }, 2000);
       } else {
         console.log("gagal");
       }
